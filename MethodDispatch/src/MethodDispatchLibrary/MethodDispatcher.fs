@@ -3,6 +3,7 @@
 open System
 open Newtonsoft.Json
 open Newtonsoft.Json.Linq
+open Utils
 
 type IncomingMethodCall = 
     { [<JsonProperty(Required = Required.Always)>]
@@ -34,6 +35,13 @@ type MethodDispatcher (getJob: unit -> string, postReply: string -> unit) =
     static let internalDeclaration = Declarations.getDeclaration()
     static let externalDeclaration = Declarations.getExternalDeclaration internalDeclaration
 
+    let printError (str: string) =
+        let handle = "[MethodDispatcher] Error: "
+        str.Split([|'\n'|])
+        |> Array.map (fun s -> handle + s + "\n")
+        |> Array.fold (+) ""
+        |> eprintf "%s"
+
     let executeMethod methodName (parameters: obj []) : obj =
         internalDeclaration.[methodName].method.Invoke(null, parameters)
 
@@ -51,24 +59,31 @@ type MethodDispatcher (getJob: unit -> string, postReply: string -> unit) =
         else
             (method.parameters, paramArray)
             ||> Array.zip
-            |> Array.map (fun (paramInfo, jToken) ->
-                jToken.ToObject paramInfo.paramType)
-            |> Ok
+            |> Array.resMap (fun (paramInfo, jToken) ->
+                fun () -> jToken.ToObject paramInfo.paramType
+                |> tryToResult
+                |> function
+                | Ok p -> Ok p
+                | Error e -> Error <| sprintf "Could not parse parameter to correct type.")
 
     let processMethodRequest methodCall =
-        let parsedCall = JsonConvert.DeserializeObject<IncomingMethodCall> methodCall   // TODO: handle exceptions
-        if internalDeclaration.ContainsKey parsedCall.methodName
-        then
-            parsedCall.parameters
-            |> parseParams parsedCall.methodName
-            |> function
-            | Error e -> Error e
-            | Ok parameters ->
-                { id = parsedCall.id
-                  reply = executeMethod parsedCall.methodName parameters }
-                |> JsonConvert.SerializeObject
-                |> Ok
-        else Error <| sprintf "The method '%s' cannot be found. Is it exposed with the [<ExposeMethod>] attribute?" parsedCall.methodName
+        fun () -> JsonConvert.DeserializeObject<IncomingMethodCall> methodCall
+        |> Utils.tryToResult
+        |> function
+        | Error e -> Error <| sprintf "Unable to deserialize method call: \n%s" methodCall
+        | Ok parsedCall ->
+            if internalDeclaration.ContainsKey parsedCall.methodName
+            then
+                parsedCall.parameters
+                |> parseParams parsedCall.methodName
+                |> function
+                | Error e -> Error e
+                | Ok parameters ->
+                    { id = parsedCall.id
+                      reply = executeMethod parsedCall.methodName parameters }
+                    |> JsonConvert.SerializeObject
+                    |> Ok
+            else Error <| sprintf "The method '%s' cannot be found. Is it exposed with the [<ExposeMethod>] attribute?" parsedCall.methodName
                 
     member _.Start () =
         while true do
@@ -78,7 +93,7 @@ type MethodDispatcher (getJob: unit -> string, postReply: string -> unit) =
                     processMethodRequest job
                     |> function
                     | Ok reply -> replyQueue.Post(reply)
-                    | Error e -> failwith e     // TODO: handle differently?
+                    | Error e -> printError e
                 }
             Async.Start processJob
 
