@@ -2,6 +2,12 @@
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
+    <AssemblyName>MethodDispatchLibrary</AssemblyName>
+    <PackageId>MethodDispatch</PackageId>
+    <Authors>Olly Larkin</Authors>
+    <Product>MethodDispatch</Product>
+    <Description>A library to call methods using JSON strings</Description>
+    <RepositoryUrl>https://github.com/OllyLarkinFYP/MethodDispatch/tree/main/MethodDispatch/src/MethodDispatchLibrary</RepositoryUrl>
   </PropertyGroup>
 
   <ItemGroup>
