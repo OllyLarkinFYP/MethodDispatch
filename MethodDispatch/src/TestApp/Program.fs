@@ -28,7 +28,7 @@ let main argv =
     let getJob () = Console.ReadLine()
     let postReply reply = printfn "%s" reply
 
-    printfn "%s" (MethodDispatcher.GetSerializedExternalDeclaration())
+    printfn "%A" (MethodDispatcher.ExternalDeclaration)
 
     MethodDispatcher(getJob, postReply).Start()
 

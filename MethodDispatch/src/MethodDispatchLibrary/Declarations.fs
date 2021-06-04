@@ -8,6 +8,13 @@ open Newtonsoft.Json.Linq
 open Utils
 
 module Declarations =
+
+    type GenericMethodException (methodName: string) =
+        inherit Exception(sprintf "The method '%s' uses generics, which are not supported by this tool." methodName)
+
+    type DuplicateMethodNameException (methodName: string) =
+        inherit Exception(sprintf "The method name '%s' has been used multiple times. This is not allowed. Please use the format '[<ExposeMethod(\"example_name\")>]' to export a different name." methodName)
+
     type InternalParam = {
         name: string
         paramType: System.Type
@@ -49,15 +56,12 @@ module Declarations =
             methods
             |> Array.iter (fun (name: string, method: MethodInfo) ->
                 if method.IsGenericMethod || method.ContainsGenericParameters
-                then failwithf "Generics are currently not supported for exposed methods: %s,\n%A" name method)
-            let repNames =
-                Array.countBy fst methods
-                |> Array.choose (fun (name, num) ->
-                    if num > 1
-                    then Some name
-                    else None)
-            if repNames.Length <> 0
-            then failwithf "The following names were declared multuple times: %A\nUse the format [<ExposeMethod(\"example_name\")>] to expose with a different name." repNames
+                then raise <| GenericMethodException name)
+            methods
+            |> Array.countBy fst
+            |> Array.iter (fun (name, count) ->
+                if count > 1
+                then raise <| DuplicateMethodNameException name)
 
         let methods =
             AppDomain.CurrentDomain.GetAssemblies()
