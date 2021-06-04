@@ -1,13 +1,35 @@
-// Learn more about F# at http://docs.microsoft.com/dotnet/fsharp
-
 open System
+open MethodDispatcher
 
-// Define a function to construct a message to print
-let from whom =
-    sprintf "from %s" whom
+[<ExposeMethod>]
+let testMethodFast (str: string) =
+    printfn "%s" str
+
+[<ExposeMethod>]
+let testMethodSlow (str: string) =
+    Threading.Thread.Sleep 1000
+    printfn "%s" str
+
+[<ExposeMethod>]
+let testMethodSlowest (str: string) =
+    Threading.Thread.Sleep 5000
+    printfn "%s" str
+
+[<ExposeMethod>]
+let testIntParam (i: int) =
+    printfn "integer: %i" i
+
+// {"id":0,"methodName":"testMethodSlowest","parameters":["slowest"]}
+// {"id":1,"methodName":"testMethodSlow","parameters":["slow"]}
+// {"id":2,"methodName":"testMethodFast","parameters":["fast"]}
 
 [<EntryPoint>]
 let main argv =
-    let message = from "F#" // Call the function
-    printfn "Hello world %s" message
-    0 // return an integer exit code
+    let getJob () = Console.ReadLine()
+    let postReply reply = printfn "%s" reply
+
+    printfn "%s" (MethodDispatcher.GetSerializedExternalDeclaration())
+
+    MethodDispatcher(getJob, postReply).Start()
+
+    0

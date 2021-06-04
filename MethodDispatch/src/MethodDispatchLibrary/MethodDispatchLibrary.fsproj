@@ -5,7 +5,15 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="Library.fs" />
+    <Compile Include="Utils.fs" />
+    <Compile Include="Attributes/ExposeMethodAttribute.fs" />
+    <Compile Include="Attributes/ExposeTypeAttribute.fs" />
+    <Compile Include="Declarations.fs" />
+    <Compile Include="MethodDispatcher.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
   </ItemGroup>
 
 </Project>
