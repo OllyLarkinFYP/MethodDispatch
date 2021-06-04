@@ -5,6 +5,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Attributes\ExposeMethodAttribute.fs" />
+    <Compile Include="Attributes\ExposeTypeAttribute.fs" />
     <Compile Include="MethodDispatcher.fs" />
   </ItemGroup>
 
