@@ -70,7 +70,7 @@ type MethodDispatcher (getJob: unit -> string, postReply: string -> unit) =
         fun () -> JsonConvert.DeserializeObject<IncomingMethodCall> methodCall
         |> Utils.tryToResult
         |> function
-        | Error e -> Error <| sprintf "Unable to deserialize method call: \n%s" methodCall
+        | Error e -> Error <| sprintf "Unable to deserialize method call: \n%s" e.Message
         | Ok parsedCall ->
             if internalDeclaration.ContainsKey parsedCall.methodName
             then
