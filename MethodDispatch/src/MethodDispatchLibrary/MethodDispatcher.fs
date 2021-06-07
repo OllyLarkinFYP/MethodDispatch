@@ -86,16 +86,21 @@ type MethodDispatcher (getJob: unit -> string, postReply: string -> unit) =
             else Error <| sprintf "The method '%s' cannot be found. Is it exposed with the [<ExposeMethod>] attribute?" parsedCall.methodName
                 
     member _.Start () =
-        while true do
-            let job = getJob()
-            let processJob =
-                async {
-                    processMethodRequest job
-                    |> function
-                    | Ok reply -> replyQueue.Post(reply)
-                    | Error e -> printError e
-                }
-            Async.Start processJob
+        let rec loop () =
+            try
+                let job = getJob()
+                let processJob =
+                    async {
+                        processMethodRequest job
+                        |> function
+                        | Ok reply -> replyQueue.Post(reply)
+                        | Error e -> printError e
+                    }
+                Async.Start processJob
+                loop()
+            with
+            | _ -> printError "Encountered exception. Quittting loop."
+        loop ()
 
     static member ExternalDeclaration = externalDeclaration
     static member GetSerializedExternalDeclaration () = Declarations.getSerializedExternalDeclaration externalDeclaration
