@@ -42,31 +42,31 @@ type MethodDispatcher (getJob: unit -> string, postReply: string -> unit) =
         |> Array.fold (+) ""
         |> eprintf "%s"
 
-    let executeMethod methodName (parameters: obj []) : obj =
-        internalDeclaration.[methodName].method.Invoke(null, parameters)
+    static member ProcessMethodRequest methodCall =
+        let executeMethod methodName (parameters: obj []) : obj =
+            internalDeclaration.[methodName].method.Invoke(null, parameters)
 
-    let parseParams methodName (parameters: JArray) : Result<obj [], string> =
-        let paramArray = Seq.toArray parameters
-        let method = internalDeclaration.[methodName]
-        if method.parameters.Length <> paramArray.Length
-        then 
-            Error <| 
-                sprintf "The wrong number of parameters were provided for the method '%s'. %s expects %i parameters, but %i were provided." 
-                    methodName 
-                    methodName 
-                    method.parameters.Length 
-                    paramArray.Length
-        else
-            (method.parameters, paramArray)
-            ||> Array.zip
-            |> Array.resMap (fun (paramInfo, jToken) ->
-                fun () -> jToken.ToObject paramInfo.paramType
-                |> tryToResult
-                |> function
-                | Ok p -> Ok p
-                | Error e -> Error <| sprintf "Could not parse parameter to correct type.")
+        let parseParams methodName (parameters: JArray) : Result<obj [], string> =
+            let paramArray = Seq.toArray parameters
+            let method = internalDeclaration.[methodName]
+            if method.parameters.Length <> paramArray.Length
+            then 
+                Error <| 
+                    sprintf "The wrong number of parameters were provided for the method '%s'. %s expects %i parameters, but %i were provided." 
+                        methodName 
+                        methodName 
+                        method.parameters.Length 
+                        paramArray.Length
+            else
+                (method.parameters, paramArray)
+                ||> Array.zip
+                |> Array.resMap (fun (paramInfo, jToken) ->
+                    fun () -> jToken.ToObject paramInfo.paramType
+                    |> tryToResult
+                    |> function
+                    | Ok p -> Ok p
+                    | Error e -> Error <| sprintf "Could not parse parameter to correct type.")
 
-    let processMethodRequest methodCall =
         fun () -> JsonConvert.DeserializeObject<IncomingMethodCall> methodCall
         |> Utils.tryToResult
         |> function
@@ -91,7 +91,7 @@ type MethodDispatcher (getJob: unit -> string, postReply: string -> unit) =
                 let job = getJob()
                 let processJob =
                     async {
-                        processMethodRequest job
+                        MethodDispatcher.ProcessMethodRequest job
                         |> function
                         | Ok reply -> replyQueue.Post(reply)
                         | Error e -> printError e
