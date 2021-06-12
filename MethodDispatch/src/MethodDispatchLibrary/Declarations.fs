@@ -86,7 +86,7 @@ module Declarations =
               parameters = convertParams dec.parameters })
 
     let private serialize (dec: ExternalDeclaration) =
-        JsonConvert.SerializeObject(dec)
+        JsonConvert.SerializeObject(dec, Formatting.Indented)
 
     let getExternalDeclaration inDec =
         inDec

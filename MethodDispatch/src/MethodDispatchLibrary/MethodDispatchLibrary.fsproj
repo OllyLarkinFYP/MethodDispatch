@@ -8,7 +8,7 @@
     <Product>MethodDispatch</Product>
     <Description>A library to call methods using JSON strings</Description>
     <RepositoryUrl>https://github.com/OllyLarkinFYP/MethodDispatch/tree/main/MethodDispatch/src/MethodDispatchLibrary</RepositoryUrl>
-    <Version>1.0.4</Version>
+    <Version>1.0.5</Version>
   </PropertyGroup>
 
   <ItemGroup>
